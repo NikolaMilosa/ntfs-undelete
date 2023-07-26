@@ -40,7 +40,7 @@ cargo build --release
 
 3. The binary will be available in the `target/release/` directory. You can either add this directory to your `PATH` environment variable or copy the binary to your desired location.
 
-### Download a prebuild binary
+### Download a prebuilt binary
 
 TODO!
 
