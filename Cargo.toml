@@ -1,0 +1,12 @@
+[package]
+name = "ntfs-undelete"
+version = "0.1.0"
+edition = "2021"
+authors = [ "Nikola Milosavljevic <nikolamilosa20@gmail.com>"]
+description = "Rust tool for retrieving deleted files from NTFS filesystems"
+readme = "README.md"
+repository = "https://github.com/NikolaMilosa/ntfs-undelete"
+keywords = ["rust", "file-recovery", "mft", "undelete"]
+license = "MIT"
+
+[dependencies]
