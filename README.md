@@ -80,7 +80,3 @@ Contributions to the Rust NTFS Undelete Tool are welcome! If you find a bug or h
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
----
-
-Please replace `yourusername` with your GitHub username or the organization name where the repository is hosted. Additionally, update the content of the README.md with relevant information as per your project's implementation and features.
