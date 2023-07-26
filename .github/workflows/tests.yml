@@ -55,6 +55,16 @@ jobs:
           command: clippy
       
       - uses: actions-rs/cargo@v1
+        name: Build in release mode
+        with:
+          command: build
+          args: --release
+
+      - uses: actions-rs/cargo@v1
         name: Run cargo test
         with:
           command: test
+
+      - name: Run dry run
+        run: |
+          ./target/release/ntfs-undelete --help
