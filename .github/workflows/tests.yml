@@ -55,6 +55,11 @@ jobs:
           command: clippy
       
       - uses: actions-rs/cargo@v1
+        name: Dry run
+        with:
+          command: run -- --help
+
+      - uses: actions-rs/cargo@v1
         name: Run cargo test
         with:
           command: test
