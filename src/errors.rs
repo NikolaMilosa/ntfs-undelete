@@ -1,5 +1,6 @@
 #[derive(Debug)]
 pub enum UndeleteError {
-    ParseError(String),
-    InitializationError(String),
+    Parse(String),
+    Initialization(String),
+    Write(String),
 }
