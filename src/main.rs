@@ -1,11 +1,13 @@
 use clap::Parser;
 use cli::Cli;
 use errors::UndeleteError;
+use log::info;
 use parser_wrapper::ParserWrapper;
 
 mod cli;
 mod errors;
 mod parser_wrapper;
+mod undelete_entry;
 
 fn main() -> Result<(), UndeleteError> {
     env_logger::builder()
@@ -22,6 +24,8 @@ fn main() -> Result<(), UndeleteError> {
         }
     };
 
-    parser.print();
+    for entry in parser.get_all_entry_names() {
+        info!("Entry: {:?}", entry);
+    }
     Ok(())
 }
