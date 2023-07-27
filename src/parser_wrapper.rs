@@ -13,7 +13,7 @@ impl ParserWrapper {
     pub fn new(path: PathBuf) -> Result<Self, UndeleteError> {
         let parser = match MftParser::from_path(path) {
             Ok(p) => p,
-            Err(e) => return Err(UndeleteError::InitializationError(e.to_string())),
+            Err(e) => return Err(UndeleteError::Initialization(e.to_string())),
         };
         Ok(Self { parser })
     }
@@ -80,7 +80,7 @@ impl ParserWrapper {
         }
     }
 
-    pub fn get_all_entry_names(&mut self) -> Vec<UndeleteFileEntry> {
+    pub fn get_all_entries(&mut self) -> Vec<UndeleteFileEntry> {
         let found = self
             .parser
             .iter_entries()
@@ -123,7 +123,7 @@ mod tests {
     fn parser_get_entry_names() {
         let entries = ParserWrapper::new(PathBuf::from("test_data/MFT_TEST"))
             .unwrap()
-            .get_all_entry_names();
+            .get_all_entries();
 
         assert!(!entries.is_empty());
     }

@@ -61,12 +61,12 @@ impl CliParsed {
 
     pub fn parse_and_validate(args: Cli) -> Result<Self, UndeleteError> {
         if args.volume.is_none() && args.image.is_none() {
-            return Err(UndeleteError::ParseError(
+            return Err(UndeleteError::Parse(
                 "Either volume or image must be specified".to_string(),
             ));
         }
         if args.volume.is_some() && args.image.is_some() {
-            return Err(UndeleteError::ParseError(
+            return Err(UndeleteError::Parse(
                 "Only one of volume or image must be specified".to_string(),
             ));
         }

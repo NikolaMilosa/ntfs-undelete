@@ -8,6 +8,7 @@ pub struct UndeleteFileEntry {
     pub filename: String,
     pub is_allocated: bool,
     pub record_number: u64,
+    pub data: Vec<u8>,
 }
 
 impl From<MftEntry> for UndeleteFileEntry {
@@ -23,6 +24,17 @@ impl From<MftEntry> for UndeleteFileEntry {
             })
             .next();
 
+        let data = value
+            .iter_attributes_matching(Some(vec![MftAttributeType::DATA]))
+            .filter_map(|attr| match attr {
+                Ok(attribute) => match attribute.data {
+                    MftAttributeContent::AttrX80(data) => Some(data),
+                    _ => None,
+                },
+                Err(_) => None,
+            })
+            .next();
+
         UndeleteFileEntry {
             filename: match file_attribute {
                 Some(attr) => attr.name,
@@ -30,6 +42,10 @@ impl From<MftEntry> for UndeleteFileEntry {
             },
             is_allocated: value.is_allocated(),
             record_number: value.header.record_number,
+            data: match data {
+                Some(d) => d.data().to_vec(),
+                None => vec![],
+            },
         }
     }
 }
