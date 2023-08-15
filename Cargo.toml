@@ -14,3 +14,4 @@ clap = { version = "4.3.19", features = ["derive"] }
 env_logger = "0.10.0"
 log = "0.4.19"
 mft = "0.6.1"
+dialoguer = "0.10.4"
