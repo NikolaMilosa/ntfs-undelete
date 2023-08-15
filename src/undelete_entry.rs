@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use mft::{
     attribute::{MftAttributeContent, MftAttributeType},
     MftEntry,
@@ -47,5 +49,11 @@ impl From<MftEntry> for UndeleteFileEntry {
                 None => vec![],
             },
         }
+    }
+}
+
+impl Display for UndeleteFileEntry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{}", self.filename))
     }
 }
