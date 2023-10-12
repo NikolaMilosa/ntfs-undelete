@@ -79,7 +79,7 @@ fn main() -> Result<(), UndeleteError> {
             ))
         })?;
 
-        if !std::fs::metadata(new_path.parent().unwrap()).is_ok() {
+        if std::fs::metadata(new_path.parent().unwrap()).is_err() {
             std::fs::create_dir_all(new_path.parent().unwrap()).map_err(|err| {
                 UndeleteError::General(format!(
                     "Couldn't create parent directories for full path '{}': {:?}",
@@ -118,7 +118,7 @@ fn get_all_unallocated_files_from_dir(
         if item.is_dir()
             && item.name().unwrap() != "."
             && item.name().unwrap() != ".."
-            && !item.name().unwrap().starts_with("$")
+            && !item.name().unwrap().starts_with('$')
         {
             current_entries.extend(get_all_unallocated_files_from_dir(
                 &format!(

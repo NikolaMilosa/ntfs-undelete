@@ -59,6 +59,7 @@ jobs:
         name: Run cargo clippy
         with:
           command: clippy
+          args: -- -Dwarnings
       
       - uses: actions-rs/cargo@v1
         name: Build in release mode

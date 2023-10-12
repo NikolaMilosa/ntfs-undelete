@@ -13,7 +13,7 @@ impl UndeleteEntry {
             "{}{}",
             match self.dir.as_str() {
                 "/" => "".to_string(),
-                rest => format!("{}/", rest[1..].to_string()),
+                rest => format!("{}/", &rest[1..]),
             },
             self.name
         )
