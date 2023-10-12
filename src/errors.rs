@@ -1,10 +1,13 @@
+use tsk::tsk_fs::FSType;
+
 #[derive(Debug)]
 pub enum UndeleteError {
     Parse(String),
     Initialization(String),
-    Write(String),
+    UnsupportedFs(FSType),
+    General(String),
     StdIO(String),
-    EmptyChosenList(String),
+    Write(String),
 }
 
 impl From<std::io::Error> for UndeleteError {

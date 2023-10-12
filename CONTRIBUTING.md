@@ -98,6 +98,6 @@ If you have any questions or need further assistance, you can reach out to us vi
 
 ## Acknowledgments
 
-We would like to express our gratitude to all contributors who help make ntfs-undelete better with their valuable contributions.
+I would like to express our gratitude to all contributors who help make ntfs-undelete better with their valuable contributions.
 
 Thank you for being a part of our community and happy contributing!
