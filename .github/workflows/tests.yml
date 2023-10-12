@@ -41,8 +41,13 @@ jobs:
         name: Setup rust toolchain
         with:
           profile: minimal
-          toolchain: stable
+          toolchain: nightly
           override: true
+
+      - name: Setup libtsk-dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install libtsk-dev
 
       - uses: actions-rs/cargo@v1
         name: Run cargo check
