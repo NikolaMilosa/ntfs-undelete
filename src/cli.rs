@@ -31,43 +31,29 @@ The path to which the restored files will be written.
         long,
         short,
         help = r#"
-The path to the volume to be restored. Conflicts with the image option.
+The path to the image of file system to be restored that was retrieved with dd.
 "#
     )]
-    volume: Option<PathBuf>,
-
-    #[arg(
-        long,
-        short,
-        help = r#"
-The path to the image of mft file to be restored. Conflicts with the volume option.
-"#
-    )]
-    image: Option<PathBuf>,
+    image: PathBuf,
 }
 
 pub struct CliParsed {
     pub dry_run: bool,
     pub output_dir: PathBuf,
-    pub volume: PathBuf,
+    pub image: PathBuf,
 }
 
 impl CliParsed {
     pub fn display(&self) {
         info!("Configured with dry-run: {}", self.dry_run);
         info!("Configured with output-dir: {}", self.output_dir.display());
-        info!("Configured with volume: {}", self.volume.display());
+        info!("Configured with volume: {}", self.image.display());
     }
 
     pub fn parse_and_validate(args: Cli) -> Result<Self, UndeleteError> {
-        if args.volume.is_none() && args.image.is_none() {
+        if !args.image.exists() {
             return Err(UndeleteError::Parse(
-                "Either volume or image must be specified".to_string(),
-            ));
-        }
-        if args.volume.is_some() && args.image.is_some() {
-            return Err(UndeleteError::Parse(
-                "Only one of volume or image must be specified".to_string(),
+                "Specified volume is Non-existant!".to_string(),
             ));
         }
 
@@ -80,68 +66,7 @@ impl From<Cli> for CliParsed {
         CliParsed {
             dry_run: value.dry_run,
             output_dir: value.output_dir,
-            volume: value.image.unwrap_or_else(|| {
-                let mut v = value.volume.unwrap();
-                v.push("$MFT");
-                v
-            }),
+            image: value.image,
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_parse_and_validate_no_volume_no_image() {
-        let non_parsed = Cli {
-            dry_run: false,
-            output_dir: PathBuf::from("/tmp"),
-            volume: None,
-            image: None,
-        };
-
-        let args = CliParsed::parse_and_validate(non_parsed);
-        assert!(args.is_err());
-    }
-
-    #[test]
-    fn test_parse_and_validate_both_volume_and_image() {
-        let non_parsed = Cli {
-            dry_run: false,
-            output_dir: PathBuf::from("/tmp"),
-            volume: Some(PathBuf::from("/tmp")),
-            image: Some(PathBuf::from("/tmp")),
-        };
-
-        let args = CliParsed::parse_and_validate(non_parsed);
-        assert!(args.is_err());
-    }
-
-    #[test]
-    fn test_parse_and_validate_only_volume() {
-        let non_parsed = Cli {
-            dry_run: false,
-            output_dir: PathBuf::from("/tmp"),
-            volume: Some(PathBuf::from("/tmp")),
-            image: None,
-        };
-
-        let args = CliParsed::parse_and_validate(non_parsed);
-        assert!(args.is_ok());
-    }
-
-    #[test]
-    fn test_parse_and_validate_only_image() {
-        let non_parsed = Cli {
-            dry_run: false,
-            output_dir: PathBuf::from("/tmp"),
-            volume: None,
-            image: Some(PathBuf::from("/tmp")),
-        };
-
-        let args = CliParsed::parse_and_validate(non_parsed);
-        assert!(args.is_ok());
     }
 }
