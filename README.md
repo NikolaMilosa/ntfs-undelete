@@ -8,7 +8,7 @@
 
 The Rust NTFS Undelete Tool is a command-line utility for recovering deleted files from NTFS (New Technology File System) volumes. It leverages the power of Rust programming language to provide fast and reliable file recovery capabilities, minimizing the risk of further data loss during the process.
 
-The tool works by scanning the Master File Table ($MFT) of the NTFS volume and identifying entries corresponding to deleted files. It then attempts to reconstruct and recover the deleted files to a specified output directory, preserving their original directory structure and file names whenever possible.
+The tool is built on-top of [Sleuthkit](https://www.sleuthkit.org/) version [4.11.1](https://www.sleuthkit.org/sleuthkit/docs/api-docs/4.11.1/index.html).
 
 ## Features
 
@@ -16,27 +16,43 @@ The tool works by scanning the Master File Table ($MFT) of the NTFS volume and i
 - Supports the recovery of various file types, including documents, images, videos, and more.
 - Recovers files while maintaining their original timestamps and attributes.
 - Allows users to specify a target output directory for recovered files.
+- Provides a dry run option for simulating the recovery process without actually writing files to the output directory.
+- Supports recovering nested data
+- Has built in file system detection which prevent running the tool on non-NTFS volumes.
 
 ## Installation
+*!TODO*
 
 ### Prerequisites
 
 - Rust programming language must be installed on your system. If not, you can download it from the official Rust website: https://www.rust-lang.org/tools/install
+- Configuring libtsk-dev:
+    - Installing libtsk-dev on Ubuntu:
+        ```bash
+        sudo apt-get update
+        sudo apt-get install libtsk-dev
+        ```
+    - Creating symbolic links for static libs
+        ```bash
+        sudo ln -s /usr/local/lib/libtsk.a /usr/local/lib/liblibtsk.a
+        sudo ln -s usr/local/lib/libtsk.so /usr/local/lib/liblibtsk.so
+        ```
+
 
 ### Building from Source
 
 1. Clone the repository:
 
-```bash
-git clone https://github.com/NikolaMilosa/ntfs-undelete.git
-cd ntfs-undelete
-```
+    ```bash
+    git clone https://github.com/NikolaMilosa/ntfs-undelete.git
+    cd ntfs-undelete
+    ```
 
 2. Build the project:
 
-```bash
-cargo build --release
-```
+    ```bash
+    cargo build --release
+    ```
 
 3. The binary will be available in the `target/release/` directory. You can either add this directory to your `PATH` environment variable or copy the binary to your desired location.
 
@@ -47,26 +63,27 @@ TODO!
 ### Usage
 
 ```bash
-ntfs-undelete [options] <device> <output_directory>
+(sudo) ntfs-undelete --output-dir <output_directory> --image <image> [--dry-run]
 ```
 
-- `device`: The path to the NTFS device from which you want to recover deleted files.
+- `image`: 
+    - The path to the NTFS image from which you want to recover deleted files. The image can be obtained with [`dd`](https://www.geeksforgeeks.org/dd-command-linux/)
+    - The path to the `/dev/sdX` of the device from which you want to recover deleted files. 
 - `output_directory`: The directory where recovered files will be stored. It must already exist.
-
-#### Options
-
-- `-h, --help`: Display help information about the tool and its usage.
-- `-v, --verbose`: Enable verbose output, providing additional details during the recovery process.
-- `-d, --dry-run`: Perform a dry run, simulating the recovery process without actually writing files to the output directory.
+- `--dry-run`: Perform a dry run, simulating the recovery process without actually writing files to the output directory.
 
 ## Examples
 
-Recover deleted files from the NTFS volume at `/dev/sda1` and save them to the `recovery_output` directory:
+1. Recover deleted files from the NTFS volume at `/dev/sda1` and save them to the `recovery_output` directory:
 
-```bash
-ntfs-undelete /dev/sda1 recovery_output
-```
+    ```bash
+    sudo ntfs-undelete --output-dir recovery_output --image /dev/sda1 
+    ```
+2. Recover deleted files from the NTFS image at `ntfs_image.dd` and save them to the `recovery_output` directory:
 
+    ```bash
+    ntfs-undelete --output-dir recovery_output --image ntfs_image.dd
+    ```
 ## Limitations
 
 - The tool cannot recover files that have been overwritten since deletion.
