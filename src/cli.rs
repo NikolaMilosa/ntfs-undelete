@@ -16,7 +16,7 @@ pub struct Cli {
 Outputs the contents of MFT found in the root of the volume and calculates what will be restored.
 "#
     )]
-    dry_run: bool,
+    pub dry_run: bool,
 
     #[arg(
         long,
@@ -25,7 +25,7 @@ Outputs the contents of MFT found in the root of the volume and calculates what 
 The path to which the restored files will be written.
 "#
     )]
-    output_dir: PathBuf,
+    pub output_dir: PathBuf,
 
     #[arg(
         long,
@@ -34,39 +34,44 @@ The path to which the restored files will be written.
 The path to the image of file system to be restored that was retrieved with dd.
 "#
     )]
-    image: PathBuf,
-}
-
-pub struct CliParsed {
-    pub dry_run: bool,
-    pub output_dir: PathBuf,
     pub image: PathBuf,
 }
 
-impl CliParsed {
+impl Cli {
     pub fn display(&self) {
         info!("Configured with dry-run: {}", self.dry_run);
         info!("Configured with output-dir: {}", self.output_dir.display());
-        info!("Configured with volume: {}", self.image.display());
+        info!("Configured with image: {}", self.image.display());
     }
 
-    pub fn parse_and_validate(args: Cli) -> Result<Self, UndeleteError> {
-        if !args.image.exists() {
+    pub fn parse_and_validate(self) -> Result<Self, UndeleteError> {
+        if !self.image.exists() {
             return Err(UndeleteError::Parse(
-                "Specified volume is Non-existant!".to_string(),
+                "Specified image is Non-existant!".to_string(),
             ));
         }
 
-        Ok(args.into())
+        if !self.output_dir.exists() && !self.dry_run {
+            return Err(UndeleteError::Parse(
+                "Specified output directory is Non-existant!".to_string(),
+            ));
+        }
+
+        Ok(self)
     }
 }
 
-impl From<Cli> for CliParsed {
-    fn from(value: Cli) -> Self {
-        CliParsed {
-            dry_run: value.dry_run,
-            output_dir: value.output_dir,
-            image: value.image,
-        }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_and_validate_non_existant_image() {
+        let args = Cli::parse_and_validate(Cli {
+            dry_run: false,
+            image: PathBuf::from("non-existant/ntfs.dd"),
+            output_dir: PathBuf::from("src"),
+        });
+        assert!(args.is_err());
     }
 }

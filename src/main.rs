@@ -1,7 +1,7 @@
 use std::io::Read;
 
-use crate::cli::Cli;
 use clap::Parser;
+use cli::Cli;
 use dialoguer::MultiSelect;
 use errors::UndeleteError;
 use log::info;
@@ -19,7 +19,7 @@ fn main() -> Result<(), UndeleteError> {
         .filter_level(log::LevelFilter::Info)
         .init();
 
-    let args = cli::CliParsed::parse_and_validate(Cli::parse())?;
+    let args = cli::Cli::parse_and_validate(Cli::parse())?;
     args.display();
 
     let image_info = tsk::TskImg::from_utf8_sing(args.image.as_path()).map_err(|err| {
@@ -78,6 +78,11 @@ fn main() -> Result<(), UndeleteError> {
                 entry.name, err
             ))
         })?;
+
+        if args.dry_run {
+            info!("Would write '{}' to disk", new_path.display());
+            continue;
+        }
 
         if std::fs::metadata(new_path.parent().unwrap()).is_err() {
             std::fs::create_dir_all(new_path.parent().unwrap()).map_err(|err| {
