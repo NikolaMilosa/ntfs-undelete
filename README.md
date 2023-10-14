@@ -48,10 +48,11 @@ The tool is built on-top of [Sleuthkit](https://www.sleuthkit.org/) version [4.1
     cd ntfs-undelete
     ```
 
-2. Build the project:
+2. Build the project with docker/podman:
 
     ```bash
-    cargo build --release
+    docker build -t ntfs-undelete-builder -f dockerfiles/Dockerfile.x86_64-unknown-linux-gnu .
+    docker run --rm -ti -v `pwd`:/app  ntfs-undelete-builder
     ```
 
 3. The binary will be available in the `target/release/` directory. You can either add this directory to your `PATH` environment variable or copy the binary to your desired location.

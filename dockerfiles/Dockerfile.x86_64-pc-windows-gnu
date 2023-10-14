@@ -1,0 +1,20 @@
+FROM ubuntu:22.04
+
+RUN apt-get update && \
+    apt-get install -y git curl build-essential autoconf automake libtool gcc-mingw-w64 g++-mingw-w64-i686 libclang-dev
+
+RUN curl https://sh.rustup.rs | sh -s -- --default-toolchain nightly -y && \
+    . $HOME/.cargo/env
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup target add i586-pc-windows-msvc
+WORKDIR /app
+
+RUN git clone https://github.com/sleuthkit/sleuthkit && \
+    cd sleuthkit && \
+    ./bootstrap && \
+    ./configure --host=i586-mingw32msvc && \
+    make && \
+    make install
+
+CMD ["cargo", "build", "--release", "--target", "i586-pc-windows-msvc"]
