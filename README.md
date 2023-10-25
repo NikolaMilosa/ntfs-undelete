@@ -35,7 +35,7 @@ The tool is built on-top of [Sleuthkit](https://www.sleuthkit.org/) version [4.1
     - Creating symbolic links for static libs
         ```bash
         sudo ln -s /usr/local/lib/libtsk.a /usr/local/lib/liblibtsk.a
-        sudo ln -s usr/local/lib/libtsk.so /usr/local/lib/liblibtsk.so
+        sudo ln -s /usr/local/lib/libtsk.so /usr/local/lib/liblibtsk.so
         ```
 
 
