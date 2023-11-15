@@ -25,9 +25,19 @@ fn main() -> Result<()> {
 
     let mft = reader.read_mft()?;
     info!("MFT size: {}", mft.len());
-    if mft.is_empty() {
-        return Ok(());
-    }
+
+    // let mut i = 0;
+    // let jump = 1024;
+    // loop {
+    //     for j in i * jump..(i + 1) * jump {
+    //         print!("{:02x} ", mft[j]);
+    //     }
+    //     println!();
+    //     i += 1;
+    //     if i * jump >= mft.len() {
+    //         break;
+    //     }
+    // }
 
     let mut parser = MftParser::from_buffer(mft)?;
 

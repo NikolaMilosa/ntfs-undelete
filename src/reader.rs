@@ -24,7 +24,7 @@ enum ReaderType {
 }
 
 const SECTOR_SIZE: usize = 512; // 512 Bytes
-const CLUSTER_SIZE: usize = 32 * 2 * SECTOR_SIZE; // 32 KiB
+const CLUSTER_SIZE: usize = 4096; // 4 KiB
 const ENTRY_SIZE: usize = 1024; // 1 KiB
 const SIGNATURES: [&[u8]; 3] = [b"FILE", b"BAAD", b"0000"];
 
@@ -90,7 +90,7 @@ impl Reader {
 
         let entry = MftEntry::from_buffer(mft_entry, 0)?;
 
-        let residental_header = match entry
+        let data_attr = match entry
             .iter_attributes()
             .filter_map(|a| a.ok())
             .filter(|a| a.header.type_code == MftAttributeType::DATA)
@@ -98,18 +98,9 @@ impl Reader {
                 ResidentialHeader::Resident(_) => None,
                 ResidentialHeader::NonResident(_) => Some(a),
             })
-            .map(|a| a.header.residential_header)
             .next()
         {
-            Some(ResidentialHeader::Resident(header)) => {
-                return Err(crate::errors::Error::Any {
-                    detail: format!(
-                        "Residental header is resident which shouldn't happen: {:?}",
-                        header
-                    ),
-                })
-            }
-            Some(ResidentialHeader::NonResident(header)) => header,
+            Some(attr) => attr,
             None => {
                 return Err(crate::errors::Error::Any {
                     detail: "Couldn't find non-residental header".to_string(),
@@ -117,11 +108,15 @@ impl Reader {
             }
         };
 
-        let mut mft_bytes = vec![0; residental_header.allocated_length as usize];
-        file.seek(SeekFrom::Start(
-            offset as u64 + residental_header.vnc_first as u64 * CLUSTER_SIZE as u64,
-        ))?;
-        file.read_exact(&mut mft_bytes)?;
+        let mut mft_bytes = vec![];
+        if let Some(run) = data_attr.data.into_data_runs() {
+            for dr in run.data_runs {
+                let mut cluster = vec![0; dr.lcn_length as usize * CLUSTER_SIZE as usize];
+                file.seek(SeekFrom::Start(dr.lcn_offset as u64 * CLUSTER_SIZE as u64))?;
+                file.read_exact(&mut cluster)?;
+                mft_bytes.extend(cluster);
+            }
+        }
 
         Ok(mft_bytes)
     }
