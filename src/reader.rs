@@ -1,13 +1,15 @@
 use mft::{
-    attribute::{header::ResidentialHeader, MftAttributeType},
+    attribute::{
+        non_resident_attr::NonResidentAttr, x80::DataAttr, MftAttributeContent, MftAttributeType,
+    },
     MftEntry,
 };
 
 use crate::errors::Result;
 use std::{
     fs::File,
-    io::{Read, Seek, SeekFrom},
-    path::PathBuf,
+    io::{BufRead, BufReader, Read, Seek, SeekFrom},
+    path::{Path, PathBuf},
 };
 
 #[derive(Debug)]
@@ -90,14 +92,13 @@ impl Reader {
 
         let entry = MftEntry::from_buffer(mft_entry, 0)?;
 
-        let data_attr = match entry
-            .iter_attributes()
+        self.read_data_from_entry(entry)
+    }
+
+    pub fn read_data_from_entry(&self, entry: MftEntry) -> Result<Vec<u8>> {
+        let attribute = match entry
+            .iter_attributes_matching(Some(vec![MftAttributeType::DATA]))
             .filter_map(|a| a.ok())
-            .filter(|a| a.header.type_code == MftAttributeType::DATA)
-            .filter_map(|a| match a.header.residential_header {
-                ResidentialHeader::Resident(_) => None,
-                ResidentialHeader::NonResident(_) => Some(a),
-            })
             .next()
         {
             Some(attr) => attr,
@@ -108,17 +109,40 @@ impl Reader {
             }
         };
 
-        let mut mft_bytes = vec![];
-        if let Some(run) = data_attr.data.into_data_runs() {
-            for dr in run.data_runs {
-                let mut cluster = vec![0; dr.lcn_length as usize * CLUSTER_SIZE as usize];
-                file.seek(SeekFrom::Start(dr.lcn_offset as u64 * CLUSTER_SIZE as u64))?;
-                file.read_exact(&mut cluster)?;
-                mft_bytes.extend(cluster);
+        match attribute.data {
+            MftAttributeContent::AttrX80(data) => self.read_from_attr_80(data),
+            MftAttributeContent::DataRun(data) => self.read_from_data_run(data),
+            _ => Err(crate::errors::Error::Any {
+                detail: "Couldn't read data from attribute".to_string(),
+            }),
+        }
+    }
+
+    fn read_from_attr_80(&self, data: DataAttr) -> Result<Vec<u8>> {
+        Ok(data.data().to_vec())
+    }
+
+    fn read_from_data_run(&self, data: NonResidentAttr) -> Result<Vec<u8>> {
+        let mut file = match self.reader_type {
+            ReaderType::Directory => {
+                let block_device = find_block_device(&self.path)?;
+                let block_device = block_device.ok_or_else(|| crate::errors::Error::Any {
+                    detail: "Couldn't find block device for directory".to_string(),
+                })?;
+
+                File::open(block_device)?
             }
+            _ => File::open(&self.path)?,
+        };
+        let mut bytes = vec![];
+        for dr in data.data_runs {
+            let mut cluster = vec![0; dr.lcn_length as usize * CLUSTER_SIZE as usize];
+            file.seek(SeekFrom::Start(dr.lcn_offset as u64 * CLUSTER_SIZE as u64))?;
+            file.read_exact(&mut cluster)?;
+            bytes.extend(cluster);
         }
 
-        Ok(mft_bytes)
+        Ok(bytes)
     }
 }
 
@@ -130,4 +154,25 @@ fn find_mft_signature(buffer: &[u8]) -> Option<usize> {
     }
 
     None
+}
+
+fn find_block_device(mount_point: &Path) -> std::io::Result<Option<PathBuf>> {
+    let mounts_file = File::open("/proc/mounts")?;
+    let reader = BufReader::new(mounts_file);
+
+    for line in reader.lines() {
+        let line = line?;
+        let parts: Vec<&str> = line.split_whitespace().collect();
+
+        if parts.len() >= 2 {
+            let mount_path = Path::new(parts[1]);
+            let block_device = Path::new(parts[0]);
+
+            if mount_path == mount_point {
+                return Ok(Some(block_device.to_path_buf()));
+            }
+        }
+    }
+
+    Ok(None)
 }

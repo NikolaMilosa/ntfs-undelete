@@ -31,8 +31,8 @@ fn main() -> Result<()> {
     let found = parser
         .iter_entries()
         .filter_map(|e| match e {
-            Ok(entry) => Some(entry.into()),
-            Err(_) => None,
+            Ok(entry) if !entry.is_dir() && !entry.is_allocated() => Some(entry.into()),
+            _ => None,
         })
         .filter(|e: &UndeleteEntry| !e.filename.is_empty())
         .filter(|e| !e.is_allocated)
@@ -61,20 +61,48 @@ fn main() -> Result<()> {
         .items(&found)
         .interact()?;
 
+    if !args.dry_run && chosen.len() == 0 {
+        return Err(errors::Error::Any {
+            detail: "No files selected".to_string(),
+        });
+    }
+
+    let mut errors = vec![];
+
     for i in chosen {
         let undelete_entry = &found[i];
-        info!(
-            "Undeleting {} with record number {}",
-            undelete_entry.filename, undelete_entry.record_number
-        );
+        let total_output_dir = args
+            .output_dir
+            .join(undelete_entry.filename.replace('[', "").replace(']', ""));
+
+        if args.dry_run {
+            info!("Would write to {}", total_output_dir.display());
+            continue;
+        }
 
         let entry = parser.get_entry(undelete_entry.record_number)?;
-        info!(
-            "Writing to {}",
-            args.output_dir
-                .join(undelete_entry.filename.as_str())
-                .display()
-        );
+
+        if std::fs::metadata(total_output_dir.parent().unwrap()).is_err() {
+            if let Err(e) = std::fs::create_dir_all(total_output_dir.parent().unwrap()) {
+                errors.push(e);
+                continue;
+            };
+        }
+
+        if let Err(e) = std::fs::write(
+            total_output_dir.as_path(),
+            reader.read_data_from_entry(entry)?,
+        ) {
+            errors.push(e);
+            continue;
+        };
+        info!("Successfully written to {}", total_output_dir.display());
+    }
+
+    if errors.len() > 0 {
+        return Err(errors::Error::Any {
+            detail: format!("{} errors occurred", errors.len()),
+        });
     }
 
     Ok(())
