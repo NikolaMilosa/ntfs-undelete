@@ -26,19 +26,6 @@ fn main() -> Result<()> {
     let mft = reader.read_mft()?;
     info!("MFT size: {}", mft.len());
 
-    // let mut i = 0;
-    // let jump = 1024;
-    // loop {
-    //     for j in i * jump..(i + 1) * jump {
-    //         print!("{:02x} ", mft[j]);
-    //     }
-    //     println!();
-    //     i += 1;
-    //     if i * jump >= mft.len() {
-    //         break;
-    //     }
-    // }
-
     let mut parser = MftParser::from_buffer(mft)?;
 
     let found = parser
@@ -51,13 +38,44 @@ fn main() -> Result<()> {
         .filter(|e| !e.is_allocated)
         .collect::<Vec<_>>();
 
+    let found = found
+        .iter()
+        .map(|e| {
+            let entry = parser.get_entry(e.record_number).unwrap();
+            let full_path = match parser.get_full_path_for_entry(&entry) {
+                Ok(Some(path)) => path.to_str().unwrap().to_string(),
+                _ => e.filename.clone(),
+            };
+
+            UndeleteEntry {
+                filename: full_path,
+                record_number: e.record_number,
+                is_allocated: e.is_allocated,
+            }
+        })
+        .collect::<Vec<_>>();
+
     let chosen = MultiSelect::new()
         .with_prompt("Use UP and DOWN arrows to scroll up and down\nUse SPACE to select/unselect an option\nUse ENTER to finish\nChoose files to undelete")
         .max_length(10)
         .items(&found)
         .interact()?;
 
-    info!("Chosen entries: {:?}", chosen);
+    for i in chosen {
+        let undelete_entry = &found[i];
+        info!(
+            "Undeleting {} with record number {}",
+            undelete_entry.filename, undelete_entry.record_number
+        );
+
+        let entry = parser.get_entry(undelete_entry.record_number)?;
+        info!(
+            "Writing to {}",
+            args.output_dir
+                .join(undelete_entry.filename.as_str())
+                .display()
+        );
+    }
 
     Ok(())
 }
