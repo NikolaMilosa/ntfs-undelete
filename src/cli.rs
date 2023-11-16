@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::{arg, Parser};
 use log::info;
 
-use crate::errors::UndeleteError;
+use crate::errors::{Error, Result};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -44,17 +44,17 @@ impl Cli {
         info!("Configured with image: {}", self.image.display());
     }
 
-    pub fn parse_and_validate(self) -> Result<Self, UndeleteError> {
+    pub fn parse_and_validate(self) -> Result<Self> {
         if !self.image.exists() {
-            return Err(UndeleteError::Parse(
-                "Specified image is Non-existant!".to_string(),
-            ));
+            return Err(Error::Any {
+                detail: format!("Specified image does not exist: {}", self.image.display()),
+            });
         }
 
         if !self.output_dir.exists() && !self.dry_run {
-            return Err(UndeleteError::Parse(
-                "Specified output directory is Non-existant!".to_string(),
-            ));
+            return Err(Error::Any {
+                detail: "Specified output directory is Non-existant!".to_string(),
+            });
         }
 
         Ok(self)
