@@ -8,8 +8,6 @@
 
 The Rust NTFS Undelete Tool is a command-line utility for recovering deleted files from NTFS (New Technology File System) volumes. It leverages the power of Rust programming language to provide fast and reliable file recovery capabilities, minimizing the risk of further data loss during the process.
 
-The tool is built on-top of [Sleuthkit](https://www.sleuthkit.org/) version [4.11.1](https://www.sleuthkit.org/sleuthkit/docs/api-docs/4.11.1/index.html).
-
 ## Features
 
 - Efficient and speedy file recovery from NTFS volumes.
@@ -20,23 +18,9 @@ The tool is built on-top of [Sleuthkit](https://www.sleuthkit.org/) version [4.1
 - Supports recovering nested data
 - Has built in file system detection which prevent running the tool on non-NTFS volumes.
 
-## Installation
-*!TODO*
-
 ### Prerequisites
 
 - Rust programming language must be installed on your system. If not, you can download it from the official Rust website: https://www.rust-lang.org/tools/install
-- Configuring libtsk-dev:
-    - Installing libtsk-dev on Ubuntu:
-        ```bash
-        sudo apt-get update
-        sudo apt-get install libtsk-dev
-        ```
-    - Creating symbolic links for static libs
-        ```bash
-        sudo ln -s /usr/local/lib/libtsk.a /usr/local/lib/liblibtsk.a
-        sudo ln -s /usr/local/lib/libtsk.so /usr/local/lib/liblibtsk.so
-        ```
 
 
 ### Building from Source
@@ -48,18 +32,16 @@ The tool is built on-top of [Sleuthkit](https://www.sleuthkit.org/) version [4.1
     cd ntfs-undelete
     ```
 
-2. Build the project with docker/podman:
+2. Build the project with cargo:
 
     ```bash
-    docker build -t ntfs-undelete-builder -f dockerfiles/Dockerfile.x86_64-unknown-linux-gnu .
-    docker run --rm -ti -v `pwd`:/app  ntfs-undelete-builder
+    cargo build --release
     ```
 
 3. The binary will be available in the `target/release/` directory. You can either add this directory to your `PATH` environment variable or copy the binary to your desired location.
 
 ### Download a prebuilt binary
-
-TODO!
+*TODO!*
 
 ### Usage
 
@@ -67,11 +49,11 @@ TODO!
 (sudo) ntfs-undelete --output-dir <output_directory> --image <image> [--dry-run]
 ```
 
-- `image`: 
+- `-i`,`--image`: 
     - The path to the NTFS image from which you want to recover deleted files. The image can be obtained with [`dd`](https://www.geeksforgeeks.org/dd-command-linux/)
     - The path to the `/dev/sdX` of the device from which you want to recover deleted files. 
-- `output_directory`: The directory where recovered files will be stored. It must already exist.
-- `--dry-run`: Perform a dry run, simulating the recovery process without actually writing files to the output directory.
+- `-o`,`--output-dir`: The directory where recovered files will be stored. It must already exist.
+- `-d`,`--dry-run`: Perform a dry run, simulating the recovery process without actually writing files to the output directory.
 
 ## Examples
 
@@ -84,6 +66,14 @@ TODO!
 
     ```bash
     ntfs-undelete --output-dir recovery_output --image ntfs_image.dd
+    ```
+3. Recover deleted files from the mounted NTFS volume:
+
+    ```bash
+    # Usually automatically mounted by the OS
+    # sudo mount /dev/sda1 /media/mnt
+     
+    ntfs-undelete --output-dir recovery_output --image /media/mnt
     ```
 ## Limitations
 
