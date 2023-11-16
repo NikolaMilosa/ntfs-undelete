@@ -61,7 +61,7 @@ fn main() -> Result<()> {
         .items(&found)
         .interact()?;
 
-    if !args.dry_run && chosen.len() == 0 {
+    if !args.dry_run && chosen.is_empty() {
         return Err(errors::Error::Any {
             detail: "No files selected".to_string(),
         });
@@ -73,7 +73,7 @@ fn main() -> Result<()> {
         let undelete_entry = &found[i];
         let total_output_dir = args
             .output_dir
-            .join(undelete_entry.filename.replace('[', "").replace(']', ""));
+            .join(undelete_entry.filename.replace(['[', ']'], ""));
 
         if args.dry_run {
             info!("Would write to {}", total_output_dir.display());
@@ -99,7 +99,7 @@ fn main() -> Result<()> {
         info!("Successfully written to {}", total_output_dir.display());
     }
 
-    if errors.len() > 0 {
+    if !errors.is_empty() {
         return Err(errors::Error::Any {
             detail: format!("{} errors occurred", errors.len()),
         });

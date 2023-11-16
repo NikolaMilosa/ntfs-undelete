@@ -136,8 +136,8 @@ impl Reader {
         };
         let mut bytes = vec![];
         for dr in data.data_runs {
-            let mut cluster = vec![0; dr.lcn_length as usize * CLUSTER_SIZE as usize];
-            file.seek(SeekFrom::Start(dr.lcn_offset as u64 * CLUSTER_SIZE as u64))?;
+            let mut cluster = vec![0; dr.lcn_length as usize * CLUSTER_SIZE];
+            file.seek(SeekFrom::Start(dr.lcn_offset * CLUSTER_SIZE as u64))?;
             file.read_exact(&mut cluster)?;
             bytes.extend(cluster);
         }
@@ -147,13 +147,7 @@ impl Reader {
 }
 
 fn find_mft_signature(buffer: &[u8]) -> Option<usize> {
-    for i in 0..buffer.len() - 4 {
-        if SIGNATURES.contains(&&buffer[i..i + 4]) {
-            return Some(i);
-        }
-    }
-
-    None
+    (0..buffer.len() - 4).find(|&i| SIGNATURES.contains(&&buffer[i..i + 4]))
 }
 
 fn find_block_device(mount_point: &Path) -> std::io::Result<Option<PathBuf>> {

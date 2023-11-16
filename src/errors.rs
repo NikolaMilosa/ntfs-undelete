@@ -6,7 +6,7 @@ pub type Result<T> = ::std::result::Result<T, Error>;
 #[derive(Debug, Error)]
 pub enum Error {
     #[error("An I/O error has occurred")]
-    IoError {
+    Io {
         #[from]
         source: std::io::Error,
     },

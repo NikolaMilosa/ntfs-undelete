@@ -37,6 +37,6 @@ impl From<MftEntry> for UndeleteEntry {
 
 impl Display for UndeleteEntry {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("{}", self.filename))
+        f.write_str(&self.filename)
     }
 }
