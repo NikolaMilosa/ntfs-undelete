@@ -32,13 +32,19 @@ The Rust NTFS Undelete Tool is a command-line utility for recovering deleted fil
     cd ntfs-undelete
     ```
 
-2. Build the project with cargo:
+2. Update submodules:
+    
+    ```bash
+    git submodule update --init --recursive
+    ```
+
+3. Build the project with cargo:
 
     ```bash
     cargo build --release
     ```
 
-3. The binary will be available in the `target/release/` directory. You can either add this directory to your `PATH` environment variable or copy the binary to your desired location.
+4. The binary will be available in the `target/release/` directory. You can either add this directory to your `PATH` environment variable or copy the binary to your desired location.
 
 ### Download a prebuilt binary
 *TODO!*
