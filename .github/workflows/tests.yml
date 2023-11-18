@@ -18,6 +18,9 @@ jobs:
         name: Checkout repository
         with:
           fetch-depth: 0
+      
+      - name: Checkout submodule
+        run: git submodule update --init --recursive
 
       - uses: actions/cache@v3
         name: Setup cache registry
