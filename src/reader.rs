@@ -25,7 +25,6 @@ enum ReaderType {
     BlockDevice,
 }
 
-const SECTOR_SIZE: usize = 512; // 512 Bytes
 const CLUSTER_SIZE: usize = 4096; // 4 KiB
 const ENTRY_SIZE: usize = 1024; // 1 KiB
 const SIGNATURES: [&[u8]; 3] = [b"FILE", b"BAAD", b"0000"];
@@ -76,16 +75,9 @@ impl Reader {
     }
 
     fn read_mft_bytes(&self) -> Result<Vec<u8>> {
+        let offset = find_mft_signature(self.path.as_path())?;
+
         let mut file = File::open(&self.path)?;
-
-        let mut buffer = vec![0; SECTOR_SIZE * 20];
-        file.read_exact(&mut buffer)?;
-
-        let offset = find_mft_signature(&buffer).ok_or_else(|| crate::errors::Error::Any {
-            detail: "Couldn't find MFT signature meaning that this is probably not NTFS partition"
-                .to_string(),
-        })?;
-
         let mut mft_entry = vec![0; ENTRY_SIZE];
         file.seek(SeekFrom::Start(offset as u64))?; // Seek to the start of the MFT
         file.read_exact(&mut mft_entry)?; // Read the first entry
@@ -146,8 +138,31 @@ impl Reader {
     }
 }
 
-fn find_mft_signature(buffer: &[u8]) -> Option<usize> {
-    (0..buffer.len() - 4).find(|&i| SIGNATURES.contains(&&buffer[i..i + 4]))
+fn find_mft_signature<P>(path: P) -> Result<usize>
+where
+    P: AsRef<Path>,
+{
+    let mut file = File::open(path)?;
+    let mut total_length = file.metadata()?.len() as i64;
+    let mut buffer_size = 4 * CLUSTER_SIZE;
+
+    loop {
+        total_length -= buffer_size as i64;
+        if total_length < 0 {
+            buffer_size += buffer_size.wrapping_add(total_length as usize) // for the last entry section
+        }
+        let mut buffer = vec![0; buffer_size];
+        file.read_exact(&mut buffer)?;
+        let found = (0..buffer.len() - 4).find(|&i| SIGNATURES.contains(&&buffer[i..i + 4]));
+        if let Some(offset) = found {
+            return Ok(offset);
+        }
+        if total_length < 0 {
+            return Err(crate::errors::Error::Any {
+                detail: "read the whole disk, couldn't find signature".to_string(),
+            });
+        }
+    }
 }
 
 fn find_block_device(mount_point: &Path) -> std::io::Result<Option<PathBuf>> {
