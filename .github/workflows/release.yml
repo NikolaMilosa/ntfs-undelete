@@ -114,11 +114,11 @@ jobs:
         shell: bash
         run: |
           if [ "${{ matrix.build }}" = "windows" ]; then
-            echo "ASSET=target/${{ matrix.target }}/release/mft_dump.exe" >> $GITHUB_ENV
-            echo "ASSET_NAME=mft_dump-${{ env.RELEASE_VERSION }}.exe" >> $GITHUB_ENV
+            echo "ASSET=target/${{ matrix.target }}/release/ntfs-undelete.exe" >> $GITHUB_ENV
+            echo "ASSET_NAME=ntfs-undelete-${{ env.RELEASE_VERSION }}.exe" >> $GITHUB_ENV
           else
-            echo "ASSET=target/${{ matrix.target }}/release/mft_dump" >> $GITHUB_ENV
-            echo "ASSET_NAME=mft_dump-${{ env.RELEASE_VERSION }}-${{ matrix.target }}" >> $GITHUB_ENV
+            echo "ASSET=target/${{ matrix.target }}/release/ntfs-undelete" >> $GITHUB_ENV
+            echo "ASSET_NAME=ntfs-undelete-${{ env.RELEASE_VERSION }}-${{ matrix.target }}" >> $GITHUB_ENV
           fi
       - name: Upload release archive
         uses: actions/upload-release-asset@v1.0.1
