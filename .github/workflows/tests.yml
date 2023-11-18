@@ -44,16 +44,8 @@ jobs:
         name: Setup rust toolchain
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
           override: true
-
-      - name: Setup external deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install libtsk-dev
-          rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
-          sudo ln -s /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/libtsk.a /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/liblibtsk.a
-          sudo ln -s /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/libtsk.so /usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/liblibtsk.so
 
       - uses: actions-rs/cargo@v1
         name: Run cargo check
