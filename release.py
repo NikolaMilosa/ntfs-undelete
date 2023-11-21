@@ -57,7 +57,24 @@ release_text = f"""
 """
 
 commits = get_commits_since_tag(tag_name=tag_name)
-for commit in reversed(commits):
+filtered_commits = [
+    commit
+    for commit in commits
+    if commit.parents and  # Check if it's not the first commit (has parents)
+    (any(
+        file.a_path.startswith('src') or file.b_path.startswith('src')
+        for file in commit.diff(commit.parents[0]).iter_change_type('M')
+    ) or
+    any(
+        file.a_path.startswith('src') or file.b_path.startswith('src')
+        for file in commit.diff(commit.parents[0]).iter_change_type('A')
+    ) or 
+    any(
+        file.a_path.startswith('src') or file.b_path.startswith('src')
+        for file in commit.diff(commit.parents[0]).iter_change_type('D')
+    ))
+]
+for commit in reversed(filtered_commits):
     username = commit.author.email.split('+')[1].split('@')[0]
     release_text += f"* [{commit.hexsha[:7]}]({commit_prefix}{commit.hexsha}) [Author: [{username}]({author_prefix}{username})] - {commit.message.splitlines()[0]}\n"
 
