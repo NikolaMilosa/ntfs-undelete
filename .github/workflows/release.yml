@@ -1,7 +1,9 @@
 on:
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag of the release - should be in v[0-9]+.[0-9]+.[0.9]+"
+        required: True
       
 jobs:
   create-release:
@@ -11,26 +13,37 @@ jobs:
       - name: Create artifacts directory
         run: mkdir artifacts
 
-      - name: Get the release version from the tag
-        if: env.VERSION == ''
-        run: |
-          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-          echo "version is: ${{ env.VERSION }}"
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
 
+      - name: Install dependancies
+        run: |
+          pip install requests
+          pip install GitPython
+      
+      - name: Generate body
+        env:
+          TAG: ${{ github.event.inputs.tag }}
+        run: |
+          python release.py
+      
       - name: Create GitHub release
         id: release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: ${{ env.VERSION }}
+          tag_name: ${{ github.event.inputs.tag }}
+          release_name: ${{ github.event.inputs.tag }}
+          body_path: ./body
 
       - name: Save release upload URL to artifact
         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
 
       - name: Save version number to artifact
-        run: echo "${{ env.VERSION }}" > artifacts/release-version
+        run: echo "${{ github.event.inputs.tag }}" > artifacts/release-version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
@@ -115,10 +128,10 @@ jobs:
         run: |
           if [ "${{ matrix.build }}" = "windows" ]; then
             echo "ASSET=target/${{ matrix.target }}/release/ntfs-undelete.exe" >> $GITHUB_ENV
-            echo "ASSET_NAME=ntfs-undelete-${{ env.RELEASE_VERSION }}.exe" >> $GITHUB_ENV
+            echo "ASSET_NAME=ntfs-undelete-${{ github.event.inputs.tag }}.exe" >> $GITHUB_ENV
           else
             echo "ASSET=target/${{ matrix.target }}/release/ntfs-undelete" >> $GITHUB_ENV
-            echo "ASSET_NAME=ntfs-undelete-${{ env.RELEASE_VERSION }}-${{ matrix.target }}" >> $GITHUB_ENV
+            echo "ASSET_NAME=ntfs-undelete-${{ github.event.inputs.tag }}-${{ matrix.target }}" >> $GITHUB_ENV
           fi
       - name: Upload release archive
         uses: actions/upload-release-asset@v1.0.1
