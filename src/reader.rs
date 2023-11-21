@@ -1,3 +1,4 @@
+use log::info;
 use mft::{
     attribute::{
         non_resident_attr::NonResidentAttr, x80::DataAttr, MftAttributeContent, MftAttributeType,
@@ -5,7 +6,10 @@ use mft::{
     MftEntry,
 };
 
-use crate::errors::Result;
+use crate::{
+    errors::Result,
+    util::{detect_file_system, FileSystems},
+};
 use std::{
     fs::File,
     io::{BufRead, BufReader, Read, Seek, SeekFrom},
@@ -15,14 +19,6 @@ use std::{
 #[derive(Debug)]
 pub struct Reader {
     path: PathBuf,
-    reader_type: ReaderType,
-}
-
-#[derive(Debug)]
-enum ReaderType {
-    Directory,
-    Image,
-    BlockDevice,
 }
 
 const CLUSTER_SIZE: usize = 4096; // 4 KiB
@@ -31,12 +27,22 @@ const SIGNATURES: [&[u8]; 3] = [b"FILE", b"BAAD", b"0000"];
 
 impl Reader {
     pub fn from_path(path: PathBuf) -> Result<Self> {
-        let reader_type = if path.is_dir() {
-            ReaderType::Directory
+        let path = if path.is_dir() {
+            let configued_path =
+                find_block_device(&path)?.ok_or_else(|| crate::errors::Error::Any {
+                    detail: "Couldn't find block device for directory".to_string(),
+                })?;
+            info!(
+                "Running in dir mode, will map to block device: {}",
+                configued_path.display()
+            );
+            configued_path
         } else if path.is_file() {
-            ReaderType::Image
+            info!("Running in image mode");
+            path
         } else if path.starts_with("/dev/") {
-            ReaderType::BlockDevice
+            info!("Running in block mode");
+            path
         } else {
             return Err(crate::errors::Error::FailedToOpenFile {
                 path,
@@ -44,18 +50,25 @@ impl Reader {
             });
         };
 
-        Ok(Self { path, reader_type })
+        let boot_sector = match detect_file_system(&path)? {
+            FileSystems::Ntfs(boot_sector) => boot_sector,
+            fs => {
+                return Err(crate::errors::Error::Any {
+                    detail: format!("Detected an unsupported file system: {}", fs),
+                })
+            }
+        };
+
+        info!("Parsed boot sector: \n{:#?}", boot_sector);
+
+        Ok(Self { path })
     }
 
     pub fn read_mft(&self) -> Result<Vec<u8>> {
-        match self.reader_type {
-            ReaderType::Directory => self.read_mft_dir(),
-            ReaderType::Image => self.read_mft_bytes(),
-            ReaderType::BlockDevice => self.read_mft_bytes(),
-        }
+        self.read_mft_bytes()
     }
 
-    fn read_mft_dir(&self) -> Result<Vec<u8>> {
+    fn _read_mft_dir(&self) -> Result<Vec<u8>> {
         let path = self.path.join("$MFT");
 
         if !path.exists() {
@@ -115,17 +128,7 @@ impl Reader {
     }
 
     fn read_from_data_run(&self, data: NonResidentAttr) -> Result<Vec<u8>> {
-        let mut file = match self.reader_type {
-            ReaderType::Directory => {
-                let block_device = find_block_device(&self.path)?;
-                let block_device = block_device.ok_or_else(|| crate::errors::Error::Any {
-                    detail: "Couldn't find block device for directory".to_string(),
-                })?;
-
-                File::open(block_device)?
-            }
-            _ => File::open(&self.path)?,
-        };
+        let mut file = File::open(&self.path)?;
         let mut bytes = vec![];
         for dr in data.data_runs {
             let mut cluster = vec![0; dr.lcn_length as usize * CLUSTER_SIZE];
