@@ -62,15 +62,15 @@ filtered_commits = [
     for commit in commits
     if commit.parents and  # Check if it's not the first commit (has parents)
     (any(
-        file.a_path.startswith('src') or file.b_path.startswith('src')
+        file.a_path.startswith('src') or file.b_path.startswith('src') or file.a_path.startswith('Cargo') or file.b_path.startswith('Cargo')
         for file in commit.diff(commit.parents[0]).iter_change_type('M')
     ) or
     any(
-        file.a_path.startswith('src') or file.b_path.startswith('src')
+        file.a_path.startswith('src') or file.b_path.startswith('src') or file.a_path.startswith('Cargo') or file.b_path.startswith('Cargo')
         for file in commit.diff(commit.parents[0]).iter_change_type('A')
     ) or 
     any(
-        file.a_path.startswith('src') or file.b_path.startswith('src')
+        file.a_path.startswith('src') or file.b_path.startswith('src') or file.a_path.startswith('Cargo') or file.b_path.startswith('Cargo')
         for file in commit.diff(commit.parents[0]).iter_change_type('D')
     ))
 ]
