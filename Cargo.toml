@@ -1,6 +1,6 @@
 [package]
 name = "ntfs-undelete"
-version = "1.0.1"
+version = "1.0.0"
 edition = "2021"
 authors = [ "Nikola Milosavljevic <nikolamilosa20@gmail.com>"]
 description = "Rust tool for retrieving deleted files from NTFS filesystems"
