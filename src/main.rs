@@ -12,6 +12,7 @@ mod cli;
 mod errors;
 mod reader;
 mod undelete_entry;
+mod util;
 
 fn main() -> Result<()> {
     env_logger::builder()
