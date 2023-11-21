@@ -31,6 +31,7 @@ jobs:
       - name: Generate body
         env:
           TAG: ${{ github.event.inputs.tag }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python release.py
       
