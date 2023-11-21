@@ -8,7 +8,7 @@ use mft::{
 
 use crate::{
     errors::Result,
-    util::{detect_file_system, FileSystems, NtfsBootSector},
+    util::{detect_file_system, FileSystems},
 };
 use std::{
     fs::File,
@@ -19,7 +19,6 @@ use std::{
 #[derive(Debug)]
 pub struct Reader {
     path: PathBuf,
-    boot_sector: NtfsBootSector,
 }
 
 const CLUSTER_SIZE: usize = 4096; // 4 KiB
@@ -52,7 +51,7 @@ impl Reader {
         };
 
         let boot_sector = match detect_file_system(&path)? {
-            FileSystems::NTFS(boot_sector) => boot_sector,
+            FileSystems::Ntfs(boot_sector) => boot_sector,
             fs => {
                 return Err(crate::errors::Error::Any {
                     detail: format!("Detected an unsupported file system: {}", fs),
@@ -62,7 +61,7 @@ impl Reader {
 
         info!("Parsed boot sector: \n{:#?}", boot_sector);
 
-        Ok(Self { path, boot_sector })
+        Ok(Self { path })
     }
 
     pub fn read_mft(&self) -> Result<Vec<u8>> {

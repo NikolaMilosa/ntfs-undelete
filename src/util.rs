@@ -7,23 +7,23 @@ use std::{
 };
 #[derive(PartialEq, Clone)]
 pub enum FileSystems {
-    NTFS(NtfsBootSector),
-    FAT,
-    EXT,
-    ISO9660,
-    HFS,
-    UNKNOWN,
+    Ntfs(NtfsBootSector),
+    Fat,
+    Ext,
+    Iso9660,
+    Hfs,
+    Unknown,
 }
 
 impl From<FileSystems> for &str {
     fn from(value: FileSystems) -> Self {
         match value {
-            FileSystems::NTFS(_) => "NTFS",
-            FileSystems::FAT => "FAT",
-            FileSystems::EXT => "EXT",
-            FileSystems::ISO9660 => "ISO9660",
-            FileSystems::HFS => "HFS",
-            FileSystems::UNKNOWN => "UNKNOWN",
+            FileSystems::Ntfs(_) => "Ntfs",
+            FileSystems::Fat => "Fat",
+            FileSystems::Ext => "Ext",
+            FileSystems::Iso9660 => "Iso9660",
+            FileSystems::Hfs => "Hfs",
+            FileSystems::Unknown => "Unknown",
         }
     }
 }
@@ -43,21 +43,21 @@ where
 
     file.read_exact(&mut boot_sector)?;
 
-    if &boot_sector[3..7] == b"NTFS" {
-        return Ok(FileSystems::NTFS(NtfsBootSector::from_bytes(&boot_sector)?));
+    if &boot_sector[3..7] == b"Ntfs" {
+        return Ok(FileSystems::Ntfs(NtfsBootSector::from_bytes(&boot_sector)?));
     }
 
-    if &boot_sector[36..39] == b"FAT" {
-        return Ok(FileSystems::FAT);
+    if &boot_sector[36..39] == b"Fat" {
+        return Ok(FileSystems::Fat);
     }
 
-    if &boot_sector[0..2] == b"H+" || &boot_sector[0..4] == b"HFSJ" || &boot_sector[0..4] == b"HFS+"
+    if &boot_sector[0..2] == b"H+" || &boot_sector[0..4] == b"HfsJ" || &boot_sector[0..4] == b"Hfs+"
     {
-        return Ok(FileSystems::HFS);
+        return Ok(FileSystems::Hfs);
     }
 
     if &boot_sector[56..58] == b"\x53\xEF" {
-        return Ok(FileSystems::EXT);
+        return Ok(FileSystems::Ext);
     }
 
     let mut iso_buffer = [0u8; 5];
@@ -65,10 +65,10 @@ where
     file.read_exact(&mut iso_buffer)?;
 
     if &iso_buffer[..] == b"CD001" {
-        return Ok(FileSystems::ISO9660);
+        return Ok(FileSystems::Iso9660);
     }
 
-    return Ok(FileSystems::UNKNOWN);
+    Ok(FileSystems::Unknown)
 }
 
 #[derive(Debug, Clone, PartialEq)]
