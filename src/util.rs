@@ -43,15 +43,15 @@ where
 
     file.read_exact(&mut boot_sector)?;
 
-    if &boot_sector[3..7] == b"Ntfs" {
+    if &boot_sector[3..7] == b"NTFS" {
         return Ok(FileSystems::Ntfs(NtfsBootSector::from_bytes(&boot_sector)?));
     }
 
-    if &boot_sector[36..39] == b"Fat" {
+    if &boot_sector[36..39] == b"FAT" {
         return Ok(FileSystems::Fat);
     }
 
-    if &boot_sector[0..2] == b"H+" || &boot_sector[0..4] == b"HfsJ" || &boot_sector[0..4] == b"Hfs+"
+    if &boot_sector[0..2] == b"H+" || &boot_sector[0..4] == b"HFSJ" || &boot_sector[0..4] == b"HFS+"
     {
         return Ok(FileSystems::Hfs);
     }
